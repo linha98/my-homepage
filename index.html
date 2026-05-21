@@ -231,6 +231,13 @@
       background: var(--ink);
     }
 
+    .category-chip.drop-target {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: rgba(47, 111, 237, 0.1);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.14);
+    }
+
     .cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -549,6 +556,7 @@
     }
 
     .field input,
+    .field select,
     .field textarea {
       width: 100%;
       border: 1px solid var(--line);
@@ -558,7 +566,8 @@
       background: #fbfcfb;
     }
 
-    .field input {
+    .field input,
+    .field select {
       min-height: 44px;
       padding: 0 12px;
     }
@@ -570,6 +579,7 @@
     }
 
     .field input:focus,
+    .field select:focus,
     .field textarea:focus {
       border-color: var(--blue);
       box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.12);
@@ -744,8 +754,8 @@
         </div>
         <div class="field">
           <label for="categoryInput">分类</label>
-          <input id="categoryInput" type="text" list="categoryOptions" placeholder="Work / AI Tools / Study" value="未分类" required>
-          <datalist id="categoryOptions"></datalist>
+          <select id="categoryInput" required></select>
+          <input id="customCategoryInput" type="text" placeholder="输入新分类名称" hidden>
         </div>
         <div class="field">
           <label for="descriptionInput">网站描述</label>
@@ -778,42 +788,15 @@
     const CATEGORY_KEY = "navHome.activeCategory.v1";
     const CUSTOM_CATEGORY_KEY = "navHome.customCategories.v1";
     const CATEGORY_ICON_KEY = "navHome.categoryIcons.v1";
+    const CUSTOM_CATEGORY_VALUE = "__custom_category__";
 
     const defaultSites = [
-      {
-        id: "openai",
-        title: "OpenAI",
-        url: "https://openai.com",
-        category: "AI Tools",
-        description: "AI 产品、研究与开发者资源入口。"
-      },
       {
         id: "github",
         title: "GitHub",
         url: "https://github.com",
         category: "Work",
         description: "代码仓库、Issue、项目协作与发布。"
-      },
-      {
-        id: "figma",
-        title: "Figma",
-        url: "https://figma.com",
-        category: "Design",
-        description: "界面设计、原型和团队设计系统。"
-      },
-      {
-        id: "mdn",
-        title: "MDN Web Docs",
-        url: "https://developer.mozilla.org",
-        category: "Study",
-        description: "前端 API、CSS、HTML 和 JavaScript 文档。"
-      },
-      {
-        id: "youtube",
-        title: "YouTube",
-        url: "https://youtube.com",
-        category: "Entertainment",
-        description: "视频、音乐、教程和订阅内容。"
       }
     ];
 
@@ -855,7 +838,8 @@
     const closeCategoryModalButton = document.getElementById("closeCategoryModalButton");
     const categoryForm = document.getElementById("categoryForm");
     const categoryList = document.getElementById("categoryList");
-    const categoryOptions = document.getElementById("categoryOptions");
+    const categoryInput = document.getElementById("categoryInput");
+    const customCategoryInput = document.getElementById("customCategoryInput");
     const siteSearchInput = document.getElementById("siteSearchInput");
     const saveSiteButton = document.getElementById("saveSiteButton");
 
@@ -871,6 +855,7 @@
     let dragPreview = null;
     let dragPlaceholder = null;
     let draggedCategory = null;
+    let categoryDropTarget = null;
 
     function loadSites() {
       try {
@@ -984,11 +969,12 @@
       }
 
       categoryRow.innerHTML = "";
-      categoryOptions.innerHTML = "";
+      categoryInput.innerHTML = "";
 
       categories.forEach((category) => {
         const button = document.createElement("button");
         button.type = "button";
+        button.dataset.category = category;
         button.className = `category-chip${category === activeCategory ? " active" : ""}`;
         button.innerHTML = category === "All"
           ? "All"
@@ -1003,9 +989,15 @@
         if (category !== "All") {
           const option = document.createElement("option");
           option.value = category;
-          categoryOptions.append(option);
+          option.textContent = category;
+          categoryInput.append(option);
         }
       });
+
+      const customOption = document.createElement("option");
+      customOption.value = CUSTOM_CATEGORY_VALUE;
+      customOption.textContent = "新建分类...";
+      categoryInput.append(customOption);
     }
 
     function getVisibleSites() {
@@ -1173,12 +1165,13 @@
 
       event.preventDefault();
       updateDragPreview(event);
-      const targetCard = document
-        .elementFromPoint(event.clientX, event.clientY)
-        ?.closest(".site-card");
+      const pointElement = document.elementFromPoint(event.clientX, event.clientY);
+      const targetCategory = pointElement?.closest(".category-chip")?.dataset.category;
+      setCategoryDropTarget(targetCategory && targetCategory !== "All" ? targetCategory : null);
+      const targetCard = pointElement?.closest(".site-card");
       if (targetCard && targetCard.dataset.id !== draggedId) {
         moveDragPlaceholder(targetCard, event.clientY);
-      } else if (cardsGrid.matches(":hover")) {
+      } else if (!categoryDropTarget && cardsGrid.matches(":hover")) {
         moveDragPlaceholderToGridEdge(event.clientY);
       }
     }
@@ -1203,9 +1196,14 @@
     }
 
     function commitPointerDrag() {
-      if (!draggedId || !dragPlaceholder) return;
+      if (!draggedId) return;
       const draggedIndex = sites.findIndex((site) => site.id === draggedId);
       if (draggedIndex < 0) return;
+      if (categoryDropTarget) {
+        moveSiteToCategory(draggedId, categoryDropTarget);
+        return;
+      }
+      if (!dragPlaceholder) return;
       const [draggedSite] = sites.splice(draggedIndex, 1);
       const placeholderTargetIndex = getPlaceholderTargetIndex();
       sites.splice(placeholderTargetIndex < 0 ? sites.length : placeholderTargetIndex, 0, draggedSite);
@@ -1217,6 +1215,7 @@
       pointerDrag?.card?.releasePointerCapture?.(pointerDrag.pointerId);
       pointerDrag = null;
       draggedId = null;
+      setCategoryDropTarget(null);
       removeDragArtifacts();
       document.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerup", handlePointerUp);
@@ -1321,12 +1320,69 @@
       return sites.length;
     }
 
+    function setCategoryDropTarget(category) {
+      if (categoryDropTarget === category) return;
+      categoryDropTarget = category;
+      document.querySelectorAll(".category-chip.drop-target").forEach((chip) => {
+        chip.classList.remove("drop-target");
+      });
+      if (!categoryDropTarget) return;
+      const targetChip = Array.from(document.querySelectorAll(".category-chip"))
+        .find((chip) => chip.dataset.category === categoryDropTarget);
+      targetChip?.classList.add("drop-target");
+    }
+
+    function moveSiteToCategory(siteId, category) {
+      const site = getSiteById(siteId);
+      if (!site || !category || category === "All") return;
+      site.category = category;
+      customCategories = mergeCategories(customCategories);
+      if (!customCategories.includes(category)) {
+        customCategories.push(category);
+      }
+      if (!categoryIcons[category]) {
+        categoryIcons[category] = pickReserveIcon(category);
+      }
+      activeCategory = category;
+      localStorage.setItem(CATEGORY_KEY, activeCategory);
+      saveSites();
+      saveCategories();
+      saveCategoryIcons();
+      render();
+    }
+
+    function setCategoryInputValue(categoryName) {
+      const category = categoryName && categoryName !== "All" ? categoryName : "未分类";
+      const exists = getCategories().includes(category);
+      categoryInput.value = exists ? category : CUSTOM_CATEGORY_VALUE;
+      customCategoryInput.hidden = exists;
+      customCategoryInput.required = !exists;
+      customCategoryInput.value = exists ? "" : category;
+    }
+
+    function getSelectedCategoryValue() {
+      const selectedCategory = categoryInput.value;
+      const customCategory = customCategoryInput.value.trim();
+      return selectedCategory === CUSTOM_CATEGORY_VALUE ? customCategory : selectedCategory;
+    }
+
+    function updateCustomCategoryVisibility() {
+      const usingCustomCategory = categoryInput.value === CUSTOM_CATEGORY_VALUE;
+      customCategoryInput.hidden = !usingCustomCategory;
+      customCategoryInput.required = usingCustomCategory;
+      if (usingCustomCategory) {
+        customCategoryInput.focus();
+      } else {
+        customCategoryInput.value = "";
+      }
+    }
+
     function openModal(category = "") {
       editingSiteId = null;
       siteForm.reset();
       document.getElementById("modalTitle").textContent = "添加网站";
       saveSiteButton.textContent = "保存";
-      document.getElementById("categoryInput").value = category === "All" ? "未分类" : category;
+      setCategoryInputValue(category);
       siteModal.classList.add("open");
       document.getElementById("urlInput").focus();
     }
@@ -1339,7 +1395,7 @@
       document.getElementById("modalTitle").textContent = "编辑网站";
       document.getElementById("urlInput").value = site.url;
       document.getElementById("titleInput").value = site.title;
-      document.getElementById("categoryInput").value = site.category;
+      setCategoryInputValue(site.category);
       document.getElementById("descriptionInput").value = site.description || "";
       saveSiteButton.textContent = "保存修改";
       siteModal.classList.add("open");
@@ -1766,12 +1822,20 @@
       input.value = "";
     });
 
+    categoryInput.addEventListener("change", updateCustomCategoryVisibility);
+
     siteForm.addEventListener("submit", (event) => {
       event.preventDefault();
+      const category = getSelectedCategoryValue();
+      if (!category) {
+        categoryInput.value = CUSTOM_CATEGORY_VALUE;
+        updateCustomCategoryVisibility();
+        return;
+      }
       const formData = {
         url: document.getElementById("urlInput").value,
         title: document.getElementById("titleInput").value,
-        category: document.getElementById("categoryInput").value,
+        category,
         description: document.getElementById("descriptionInput").value
       };
       if (editingSiteId) {
