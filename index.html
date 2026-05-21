@@ -663,6 +663,23 @@
       font-size: 12px;
     }
 
+    .storage-status {
+      min-height: 18px;
+    }
+
+    .storage-status.error {
+      color: #c2410c;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
     @media (max-width: 720px) {
       .app-shell {
         padding: 18px 14px 32px;
@@ -718,6 +735,9 @@
         <input id="siteSearchInput" type="search" placeholder="搜索名称、网址、描述" autocomplete="off">
       </label>
       <div class="toolbar">
+        <button class="ghost-button" id="exportDataButton" type="button">导出数据</button>
+        <button class="ghost-button" id="importDataButton" type="button">导入数据</button>
+        <input class="visually-hidden" id="importDataInput" type="file" accept="application/json,.json">
         <button class="ghost-button" id="manageCategoryButton" type="button">+ 添加分类</button>
         <button class="primary-button" id="addSiteButton" type="button">+ 添加网站</button>
       </div>
@@ -728,6 +748,7 @@
         <div class="section-head">
           <h2>快捷导航</h2>
           <div class="section-tools">
+            <p class="small-note storage-status" id="storageStatus" aria-live="polite"></p>
             <p class="small-note">拖动卡片可调整顺序</p>
           </div>
         </div>
@@ -788,6 +809,7 @@
     const CATEGORY_KEY = "navHome.activeCategory.v1";
     const CUSTOM_CATEGORY_KEY = "navHome.customCategories.v1";
     const CATEGORY_ICON_KEY = "navHome.categoryIcons.v1";
+    const BACKUP_VERSION = 1;
     const CUSTOM_CATEGORY_VALUE = "__custom_category__";
 
     const defaultSites = [
@@ -834,6 +856,9 @@
     const siteForm = document.getElementById("siteForm");
     const addSiteButton = document.getElementById("addSiteButton");
     const manageCategoryButton = document.getElementById("manageCategoryButton");
+    const exportDataButton = document.getElementById("exportDataButton");
+    const importDataButton = document.getElementById("importDataButton");
+    const importDataInput = document.getElementById("importDataInput");
     const cancelModalButton = document.getElementById("cancelModalButton");
     const closeCategoryModalButton = document.getElementById("closeCategoryModalButton");
     const categoryForm = document.getElementById("categoryForm");
@@ -842,6 +867,7 @@
     const customCategoryInput = document.getElementById("customCategoryInput");
     const siteSearchInput = document.getElementById("siteSearchInput");
     const saveSiteButton = document.getElementById("saveSiteButton");
+    const storageStatus = document.getElementById("storageStatus");
 
     let sites = loadSites();
     let customCategories = loadCustomCategories();
@@ -903,6 +929,120 @@
 
     function saveCategoryIcons() {
       localStorage.setItem(CATEGORY_ICON_KEY, JSON.stringify(categoryIcons));
+    }
+
+    function saveActiveCategory() {
+      localStorage.setItem(CATEGORY_KEY, activeCategory);
+    }
+
+    function saveAllData() {
+      saveSites();
+      saveCategories();
+      saveCategoryIcons();
+      saveActiveCategory();
+    }
+
+    function cloneData(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function createBackupData() {
+      customCategories = mergeCategories(customCategories);
+      return {
+        version: BACKUP_VERSION,
+        exportedAt: new Date().toISOString(),
+        sites: cloneData(sites),
+        activeCategory,
+        customCategories: cloneData(customCategories),
+        categoryIcons: cloneData(categoryIcons)
+      };
+    }
+
+    function normalizeBackupData(data) {
+      if (!data || typeof data !== "object" || Array.isArray(data)) {
+        throw new Error("Invalid backup: root must be an object.");
+      }
+      if (!Array.isArray(data.sites)) {
+        throw new Error("Invalid backup: sites must be an array.");
+      }
+
+      const normalizedSites = data.sites
+        .filter((site) => site && typeof site === "object" && typeof site.url === "string")
+        .map((site, index) => {
+          const url = normalizeUrl(site.url);
+          const category = String(site.category || "Uncategorized").trim() || "Uncategorized";
+          return {
+            id: String(site.id || `imported-${Date.now()}-${index}`),
+            title: String(site.title || getHostname(url)),
+            url,
+            category,
+            description: String(site.description || ""),
+            ...(site.metadataPending && typeof site.metadataPending === "object"
+              ? { metadataPending: site.metadataPending }
+              : {})
+          };
+        });
+
+      const normalizedCategories = Array.isArray(data.customCategories)
+        ? data.customCategories
+            .map((category) => String(category || "").trim())
+            .filter((category) => category && category !== "All")
+        : [];
+      const normalizedIcons = data.categoryIcons && typeof data.categoryIcons === "object" && !Array.isArray(data.categoryIcons)
+        ? Object.fromEntries(Object.entries(data.categoryIcons).filter((entry) => typeof entry[1] === "string"))
+        : {};
+      const normalizedActiveCategory = typeof data.activeCategory === "string" && data.activeCategory.trim()
+        ? data.activeCategory.trim()
+        : "All";
+
+      return {
+        version: BACKUP_VERSION,
+        sites: normalizedSites,
+        activeCategory: normalizedActiveCategory,
+        customCategories: normalizedCategories,
+        categoryIcons: normalizedIcons
+      };
+    }
+
+    function downloadBackupData() {
+      const backup = createBackupData();
+      const content = JSON.stringify(backup, null, 2);
+      const blob = new Blob([content], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      anchor.href = url;
+      anchor.download = `navhome-backup-${date}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      updateStorageStatus("数据已导出。");
+    }
+
+    async function importBackupData(file) {
+      const text = await file.text();
+      const data = normalizeBackupData(JSON.parse(text));
+      sites = data.sites.length ? data.sites : defaultSites;
+      customCategories = data.customCategories;
+      categoryIcons = data.categoryIcons;
+      activeCategory = data.activeCategory;
+      customCategories = mergeCategories(customCategories);
+      if (!getCategories().includes(activeCategory)) {
+        activeCategory = "All";
+      }
+      saveAllData();
+      render();
+      updateStorageStatus("数据已导入并保存。");
+    }
+
+    function updateStorageStatus(message, type = "info") {
+      storageStatus.textContent = message;
+      storageStatus.classList.toggle("error", type === "error");
+      if (!message) return;
+      window.clearTimeout(updateStorageStatus.timer);
+      updateStorageStatus.timer = window.setTimeout(() => {
+        storageStatus.textContent = "";
+        storageStatus.classList.remove("error");
+      }, 3200);
     }
 
     function mergeCategories(preferredOrder) {
@@ -1769,6 +1909,24 @@
 
     addSiteButton.addEventListener("click", () => openModal(activeCategory));
     manageCategoryButton.addEventListener("click", openCategoryModal);
+    exportDataButton.addEventListener("click", downloadBackupData);
+    importDataButton.addEventListener("click", () => importDataInput.click());
+    importDataInput.addEventListener("change", async () => {
+      const [file] = importDataInput.files;
+      if (!file) return;
+      if (!window.confirm("导入会替换当前浏览器里的 NavHome 数据，确定继续吗？")) {
+        importDataInput.value = "";
+        return;
+      }
+      try {
+        await importBackupData(file);
+      } catch (error) {
+        console.warn("Import failed.", error);
+        updateStorageStatus("导入失败，请选择有效的备份 JSON 文件。", "error");
+      } finally {
+        importDataInput.value = "";
+      }
+    });
     cancelModalButton.addEventListener("click", closeModal);
     closeCategoryModalButton.addEventListener("click", closeCategoryModal);
 
