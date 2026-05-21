@@ -1,0 +1,1792 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NavHome</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --ink: #20252c;
+      --muted: #6b7280;
+      --line: #dde3dc;
+      --blue: #2f6fed;
+      --green: #1f9d78;
+      --coral: #e76f51;
+      --yellow: #f0b429;
+      --shadow: 0 18px 50px rgba(28, 35, 42, 0.12);
+      --soft-shadow: 0 12px 28px rgba(28, 35, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      background:
+        linear-gradient(135deg, rgba(47, 111, 237, 0.08), transparent 36%),
+        linear-gradient(315deg, rgba(31, 157, 120, 0.08), transparent 34%),
+        var(--bg);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      padding: 28px clamp(18px, 4vw, 56px) 44px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--blue), var(--green));
+      box-shadow: var(--soft-shadow);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 30px);
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .topbar-search {
+      flex: 1 1 320px;
+      max-width: 460px;
+      margin-left: auto;
+    }
+
+    .icon-button,
+    .primary-button,
+    .ghost-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+
+    .primary-button {
+      padding: 0 16px;
+      color: #fff;
+      background: var(--ink);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .ghost-button {
+      padding: 0 14px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.72);
+      border-color: rgba(32, 37, 44, 0.08);
+    }
+
+    .icon-button {
+      width: 42px;
+      color: var(--ink);
+      background: #fff;
+      border-color: rgba(32, 37, 44, 0.08);
+    }
+
+    .primary-button:hover,
+    .ghost-button:hover,
+    .icon-button:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .section-tools {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .site-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: min(320px, 100%);
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid rgba(32, 37, 44, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    .site-search svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+      color: var(--muted);
+    }
+
+    .site-search input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .site-search input::placeholder {
+      color: #9aa3af;
+    }
+
+    .main-grid {
+      max-width: 1180px;
+      margin: 46px auto 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .category-row {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 2px 0 18px;
+      scrollbar-width: thin;
+    }
+
+    .category-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      flex: 0 0 auto;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid rgba(32, 37, 44, 0.1);
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .category-chip.active {
+      color: #fff;
+      border-color: var(--ink);
+      background: var(--ink);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 16px;
+    }
+
+    .site-card {
+      position: relative;
+      min-height: 176px;
+      padding: 18px;
+      border: 1px solid rgba(32, 37, 44, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 24px rgba(28, 35, 42, 0.06);
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .site-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .site-card.dragging {
+      opacity: 0.48;
+      transform: scale(0.98);
+    }
+
+    .site-card.drag-over {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.14);
+    }
+
+    .drag-placeholder {
+      min-height: 176px;
+      border: 2px dashed rgba(47, 111, 237, 0.52);
+      border-radius: 8px;
+      background: rgba(47, 111, 237, 0.08);
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.72);
+    }
+
+    .drag-preview {
+      position: fixed;
+      z-index: 60;
+      pointer-events: none;
+      opacity: 0.86;
+      transform: translate(-18px, -18px) rotate(2deg) scale(1.02);
+      box-shadow: 0 24px 60px rgba(28, 35, 42, 0.2);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .site-main {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 12px;
+    }
+
+    .favicon {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      background: #eef2f7;
+      object-fit: cover;
+    }
+
+    .site-title {
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 16px;
+    }
+
+    .site-url {
+      display: block;
+      margin-top: 4px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      text-decoration: none;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .drag-handle {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid rgba(32, 37, 44, 0.08);
+      border-radius: 8px;
+      color: var(--muted);
+      background: #fff;
+      cursor: grab;
+    }
+
+    .description {
+      display: -webkit-box;
+      min-height: 42px;
+      margin: 0 0 16px;
+      overflow: hidden;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      color: #153b2f;
+      background: rgba(31, 157, 120, 0.14);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .category-icon,
+    .tag-icon {
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+
+    .category-icon svg,
+    .tag-icon svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+    }
+
+    .card-actions {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .text-action,
+    .menu-action,
+    .delete-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+
+    .text-action {
+      padding: 0 12px;
+      color: var(--blue);
+      background: rgba(47, 111, 237, 0.08);
+    }
+
+    .text-action.danger {
+      color: #c2410c;
+      background: rgba(231, 111, 81, 0.12);
+    }
+
+    .menu-action {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 0 12px;
+      color: var(--ink);
+      background: transparent;
+    }
+
+    .menu-action:hover {
+      background: rgba(47, 111, 237, 0.08);
+      color: var(--blue);
+    }
+
+    .menu-action.danger {
+      color: #c2410c;
+    }
+
+    .menu-action.danger:hover,
+    .delete-button:hover {
+      border-color: rgba(231, 111, 81, 0.24);
+      background: rgba(231, 111, 81, 0.12);
+      color: #9a3412;
+    }
+
+    .delete-button {
+      padding: 0 14px;
+      color: #c2410c;
+      background: rgba(231, 111, 81, 0.1);
+    }
+
+    .card-menu-button {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border: 1px solid rgba(32, 37, 44, 0.08);
+      border-radius: 8px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .card-menu {
+      position: absolute;
+      right: 0;
+      bottom: 36px;
+      z-index: 4;
+      display: none;
+      min-width: 146px;
+      padding: 8px;
+      border: 1px solid rgba(32, 37, 44, 0.1);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .site-card.menu-open .card-menu {
+      display: grid;
+      gap: 4px;
+    }
+
+    .pending-text {
+      color: #7c5a0c;
+      background: rgba(240, 180, 41, 0.14);
+    }
+
+    .empty-state {
+      display: none;
+      padding: 34px;
+      border: 1px dashed rgba(32, 37, 44, 0.22);
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .empty-state.visible {
+      display: block;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(18, 24, 31, 0.48);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(520px, 100%);
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 22px 22px 0;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .site-form {
+      display: grid;
+      gap: 14px;
+      padding: 20px 22px 22px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      color: #374151;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: 0;
+      color: var(--ink);
+      background: #fbfcfb;
+    }
+
+    .field input {
+      min-height: 44px;
+      padding: 0 12px;
+    }
+
+    .field textarea {
+      min-height: 86px;
+      padding: 11px 12px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.12);
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .category-form {
+      display: flex;
+      gap: 10px;
+      padding: 20px 22px 12px;
+    }
+
+    .category-form input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      outline: 0;
+      background: #fbfcfb;
+    }
+
+    .category-list {
+      display: grid;
+      gap: 10px;
+      padding: 0 22px 22px;
+    }
+
+    .category-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) minmax(112px, auto) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid rgba(32, 37, 44, 0.08);
+      border-radius: 8px;
+      background: #fbfcfb;
+    }
+
+    .category-item.dragging {
+      opacity: 0.52;
+    }
+
+    .category-item.drag-over {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.12);
+    }
+
+    .category-item input {
+      min-width: 0;
+      min-height: 38px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0 10px;
+      background: #fff;
+    }
+
+    .category-item select {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 8px;
+      background: #fff;
+    }
+
+    .category-item input:focus {
+      border-color: var(--blue);
+      outline: 0;
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.12);
+    }
+
+    .small-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 720px) {
+      .app-shell {
+        padding: 18px 14px 32px;
+      }
+
+      .topbar,
+      .section-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+        width: 100%;
+      }
+
+      .section-tools {
+        justify-content: flex-start;
+        width: 100%;
+      }
+
+      .topbar-search {
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+      }
+
+      .category-item {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .category-item select,
+      .category-item button:not(.drag-handle) {
+        grid-column: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">N</div>
+        <div>
+          <h1>NavHome</h1>
+          <p>个人主页导航</p>
+        </div>
+      </div>
+      <label class="site-search topbar-search" for="siteSearchInput">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m21 21-4.2-4.2m2.2-5.3a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input id="siteSearchInput" type="search" placeholder="搜索名称、网址、描述" autocomplete="off">
+      </label>
+      <div class="toolbar">
+        <button class="ghost-button" id="manageCategoryButton" type="button">+ 添加分类</button>
+        <button class="primary-button" id="addSiteButton" type="button">+ 添加网站</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="main-grid" aria-label="Bookmarks">
+        <div class="section-head">
+          <h2>快捷导航</h2>
+          <div class="section-tools">
+            <p class="small-note">拖动卡片可调整顺序</p>
+          </div>
+        </div>
+        <div class="category-row" id="categoryRow" aria-label="Categories"></div>
+        <div class="cards-grid" id="cardsGrid"></div>
+        <div class="empty-state" id="emptyState">当前分类还没有网址，点击“添加网站”添加一个。</div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="siteModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">添加网站</h2>
+      </div>
+      <form class="site-form" id="siteForm">
+        <div class="field">
+          <label for="urlInput">URL</label>
+          <input id="urlInput" type="text" placeholder="example.com 或 https://example.com" required>
+        </div>
+        <div class="field">
+          <label for="titleInput">标题</label>
+          <input id="titleInput" type="text" placeholder="可不填，保存时自动获取">
+        </div>
+        <div class="field">
+          <label for="categoryInput">分类</label>
+          <input id="categoryInput" type="text" list="categoryOptions" placeholder="Work / AI Tools / Study" value="未分类" required>
+          <datalist id="categoryOptions"></datalist>
+        </div>
+        <div class="field">
+          <label for="descriptionInput">网站描述</label>
+          <textarea id="descriptionInput" placeholder="一句话描述这个网站的用途"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="ghost-button" id="cancelModalButton" type="button">取消</button>
+          <button class="primary-button" id="saveSiteButton" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="categoryModal" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="categoryModalTitle">分类管理</h2>
+        <button class="icon-button" id="closeCategoryModalButton" type="button" aria-label="Close">x</button>
+      </div>
+      <form class="category-form" id="categoryForm">
+        <input id="newCategoryInput" type="text" placeholder="输入新分类名称" required>
+        <button class="primary-button" type="submit">添加分类</button>
+      </form>
+      <div class="category-list" id="categoryList"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "navHome.sites.v1";
+    const CATEGORY_KEY = "navHome.activeCategory.v1";
+    const CUSTOM_CATEGORY_KEY = "navHome.customCategories.v1";
+    const CATEGORY_ICON_KEY = "navHome.categoryIcons.v1";
+
+    const defaultSites = [
+      {
+        id: "openai",
+        title: "OpenAI",
+        url: "https://openai.com",
+        category: "AI Tools",
+        description: "AI 产品、研究与开发者资源入口。"
+      },
+      {
+        id: "github",
+        title: "GitHub",
+        url: "https://github.com",
+        category: "Work",
+        description: "代码仓库、Issue、项目协作与发布。"
+      },
+      {
+        id: "figma",
+        title: "Figma",
+        url: "https://figma.com",
+        category: "Design",
+        description: "界面设计、原型和团队设计系统。"
+      },
+      {
+        id: "mdn",
+        title: "MDN Web Docs",
+        url: "https://developer.mozilla.org",
+        category: "Study",
+        description: "前端 API、CSS、HTML 和 JavaScript 文档。"
+      },
+      {
+        id: "youtube",
+        title: "YouTube",
+        url: "https://youtube.com",
+        category: "Entertainment",
+        description: "视频、音乐、教程和订阅内容。"
+      }
+    ];
+
+    const iconLibrary = [
+      { id: "folder", label: "文件夹", path: "M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 2h7.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z" },
+      { id: "spark", label: "智能", path: "M12 2l1.8 5.3L19 9l-5.2 1.7L12 16l-1.8-5.3L5 9l5.2-1.7L12 2Zm6 10 1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z" },
+      { id: "briefcase", label: "工作", path: "M9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1m-9 0h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 5h12" },
+      { id: "palette", label: "设计", path: "M12 3a9 9 0 0 0 0 18h1.2a1.8 1.8 0 0 0 1.2-3.1 1.8 1.8 0 0 1 1.2-3.1H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3ZM7.5 10h.1M10 7.5h.1M14 7.5h.1M16.5 10h.1" },
+      { id: "book", label: "学习", path: "M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H7a3 3 0 0 0-3 3V5.5Zm0 0V22m4-15h8m-8 4h8" },
+      { id: "play", label: "娱乐", path: "M8 5.5v13l10-6.5-10-6.5Z" },
+      { id: "code", label: "代码", path: "m8 9-4 3 4 3m8-6 4 3-4 3m-2-8-4 10" },
+      { id: "chart", label: "数据", path: "M4 19V5m0 14h16M8 16v-5m4 5V7m4 9v-8" },
+      { id: "cloud", label: "云端", path: "M17.5 18H8a4 4 0 1 1 .8-7.9A5.5 5.5 0 0 1 19 12.5 2.8 2.8 0 0 1 17.5 18Z" },
+      { id: "star", label: "收藏", path: "m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2 6.4 20.2 7.5 14 3 9.6l6.2-.9L12 3Z" },
+      { id: "tool", label: "工具", path: "M14.5 6.5 17 4a3.5 3.5 0 0 1-4.7 4.7L6 15l3 3 6.3-6.3A3.5 3.5 0 0 1 20 7l-2.5 2.5" },
+      { id: "mail", label: "邮件", path: "M4 6h16v12H4V6Zm0 0 8 7 8-7" },
+      { id: "video", label: "视频", path: "M4 6h12v12H4V6Zm12 4 4-3v10l-4-3" },
+      { id: "globe", label: "网页", path: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-8-9h16M12 3c2.2 2.4 3.3 5.4 3.3 9S14.2 18.6 12 21c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3Z" }
+    ];
+
+    const defaultCategoryIcons = {
+      "AI Tools": "spark",
+      Work: "briefcase",
+      Design: "palette",
+      Study: "book",
+      Entertainment: "play",
+      "未分类": "folder"
+    };
+
+    const cardsGrid = document.getElementById("cardsGrid");
+    const categoryRow = document.getElementById("categoryRow");
+    const emptyState = document.getElementById("emptyState");
+    const siteModal = document.getElementById("siteModal");
+    const categoryModal = document.getElementById("categoryModal");
+    const siteForm = document.getElementById("siteForm");
+    const addSiteButton = document.getElementById("addSiteButton");
+    const manageCategoryButton = document.getElementById("manageCategoryButton");
+    const cancelModalButton = document.getElementById("cancelModalButton");
+    const closeCategoryModalButton = document.getElementById("closeCategoryModalButton");
+    const categoryForm = document.getElementById("categoryForm");
+    const categoryList = document.getElementById("categoryList");
+    const categoryOptions = document.getElementById("categoryOptions");
+    const siteSearchInput = document.getElementById("siteSearchInput");
+    const saveSiteButton = document.getElementById("saveSiteButton");
+
+    let sites = loadSites();
+    let customCategories = loadCustomCategories();
+    let categoryIcons = loadCategoryIcons();
+    let activeCategory = localStorage.getItem(CATEGORY_KEY) || "All";
+    let currentSearchTerm = "";
+    let editingSiteId = null;
+    let draggedId = null;
+    let pointerDrag = null;
+    let suppressCardClick = false;
+    let dragPreview = null;
+    let dragPlaceholder = null;
+    let draggedCategory = null;
+
+    function loadSites() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (Array.isArray(stored) && stored.length) {
+          return stored;
+        }
+      } catch (error) {
+        console.warn("Could not read stored navigation sites.", error);
+      }
+      return defaultSites;
+    }
+
+    function loadCustomCategories() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(CUSTOM_CATEGORY_KEY));
+        if (Array.isArray(stored)) {
+          return mergeCategories(stored.map((item) => typeof item === "string" ? item : item?.name).filter(Boolean));
+        }
+      } catch (error) {
+        console.warn("Could not read stored categories.", error);
+      }
+      return mergeCategories([]);
+    }
+
+    function loadCategoryIcons() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(CATEGORY_ICON_KEY));
+        if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+          return stored;
+        }
+      } catch (error) {
+        console.warn("Could not read stored category icons.", error);
+      }
+      return {};
+    }
+
+    function saveSites() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sites));
+    }
+
+    function saveCategories() {
+      localStorage.setItem(CUSTOM_CATEGORY_KEY, JSON.stringify(customCategories));
+    }
+
+    function saveCategoryIcons() {
+      localStorage.setItem(CATEGORY_ICON_KEY, JSON.stringify(categoryIcons));
+    }
+
+    function mergeCategories(preferredOrder) {
+      const ordered = [];
+      const seen = new Set();
+      const add = (category) => {
+        const clean = String(category || "").trim();
+        if (!clean || clean === "All" || seen.has(clean)) return;
+        seen.add(clean);
+        ordered.push(clean);
+      };
+
+      preferredOrder.forEach(add);
+      sites.forEach((site) => add(site.category));
+      return ordered;
+    }
+
+    function normalizeUrl(url) {
+      const trimmed = url.trim();
+      if (!trimmed) return "";
+      return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    }
+
+    function getHostname(url) {
+      try {
+        return new URL(normalizeUrl(url)).hostname.replace(/^www\./, "");
+      } catch {
+        return url;
+      }
+    }
+
+    function getCategoryIcon(categoryName) {
+      const iconId = categoryIcons[categoryName] || defaultCategoryIcons[categoryName] || pickReserveIcon(categoryName);
+      return iconLibrary.some((icon) => icon.id === iconId) ? iconId : "folder";
+    }
+
+    function pickReserveIcon(categoryName) {
+      const reserve = iconLibrary.map((icon) => icon.id);
+      const text = String(categoryName || "");
+      const total = Array.from(text).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      return reserve[total % reserve.length] || "folder";
+    }
+
+    function renderSvgIcon(iconId) {
+      const icon = iconLibrary.find((item) => item.id === iconId) || iconLibrary[0];
+      return `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="${icon.path}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    }
+
+    function renderIconOptions(selectedIcon) {
+      return iconLibrary.map((icon) => (
+        `<option value="${escapeAttribute(icon.id)}"${icon.id === selectedIcon ? " selected" : ""}>${escapeHtml(icon.label)}</option>`
+      )).join("");
+    }
+
+    function getCategories() {
+      customCategories = mergeCategories(customCategories);
+      return ["All", ...customCategories];
+    }
+
+    function renderCategories() {
+      const categories = getCategories();
+      if (!categories.includes(activeCategory)) {
+        activeCategory = "All";
+      }
+
+      categoryRow.innerHTML = "";
+      categoryOptions.innerHTML = "";
+
+      categories.forEach((category) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `category-chip${category === activeCategory ? " active" : ""}`;
+        button.innerHTML = category === "All"
+          ? "All"
+          : `<span class="category-icon">${renderSvgIcon(getCategoryIcon(category))}</span>${escapeHtml(category)}`;
+        button.addEventListener("click", () => {
+          activeCategory = category;
+          localStorage.setItem(CATEGORY_KEY, activeCategory);
+          render();
+        });
+        categoryRow.append(button);
+
+        if (category !== "All") {
+          const option = document.createElement("option");
+          option.value = category;
+          categoryOptions.append(option);
+        }
+      });
+    }
+
+    function getVisibleSites() {
+      const scopedSites = activeCategory === "All"
+        ? sites
+        : sites.filter((site) => site.category === activeCategory);
+      return scopedSites.filter((site) => matchesSiteSearch(site));
+    }
+
+    function matchesSiteSearch(site) {
+      if (!currentSearchTerm) return true;
+      const haystack = [
+        site.title,
+        site.url,
+        getHostname(site.url),
+        site.description,
+        site.category
+      ].join(" ").toLowerCase();
+      return haystack.includes(currentSearchTerm);
+    }
+
+    function applySiteFilter() {
+      currentSearchTerm = siteSearchInput.value.trim().toLowerCase();
+      renderCards();
+    }
+
+    function renderCards() {
+      const visibleSites = getVisibleSites();
+      cardsGrid.innerHTML = "";
+      emptyState.classList.toggle("visible", visibleSites.length === 0);
+
+      visibleSites.forEach((site) => {
+        const card = document.createElement("article");
+        card.className = "site-card";
+        card.draggable = false;
+        card.dataset.id = site.id;
+        card.tabIndex = 0;
+        card.setAttribute("role", "link");
+        card.setAttribute("aria-label", `打开 ${site.title}`);
+        const pendingClass = site.metadataPending?.description ? " pending-text" : "";
+        const iconMarkup = renderSvgIcon(getCategoryIcon(site.category));
+        card.innerHTML = `
+          <div class="card-top">
+            <div class="site-main">
+              <img class="favicon" alt="" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(site.url)}&sz=64">
+              <div class="site-copy">
+                <h3 class="site-title">${escapeHtml(site.title)}</h3>
+                <a class="site-url" href="${escapeAttribute(site.url)}" target="_blank" rel="noreferrer">${escapeHtml(getHostname(site.url))}</a>
+              </div>
+            </div>
+            <button class="drag-handle" type="button" aria-label="Drag ${escapeAttribute(site.title)}">::</button>
+          </div>
+          <p class="description${pendingClass}">${escapeHtml(site.description || "暂无描述")}</p>
+          <div class="card-footer">
+            <span class="tag"><span class="tag-icon">${iconMarkup}</span>${escapeHtml(site.category)}</span>
+            <div class="card-actions">
+              <button class="card-menu-button" type="button" data-menu-button aria-label="更多操作">...</button>
+              <div class="card-menu">
+                <button class="menu-action" type="button" data-action="edit-site">编辑网站</button>
+                <button class="menu-action danger" type="button" data-action="delete-site">删除网站</button>
+              </div>
+            </div>
+          </div>
+        `;
+        card.addEventListener("click", handleCardClick);
+        card.addEventListener("keydown", handleCardKeydown);
+        card.addEventListener("pointerdown", handlePointerDown);
+        cardsGrid.append(card);
+      });
+    }
+
+    function handleCardClick(event) {
+      if (suppressCardClick) {
+        suppressCardClick = false;
+        return;
+      }
+      const card = event.currentTarget;
+      const site = getSiteById(card.dataset.id);
+      if (!site) return;
+
+      const actionButton = event.target.closest("[data-action]");
+      const menuButton = event.target.closest("[data-menu-button]");
+      if (menuButton) {
+        event.stopPropagation();
+        document.querySelectorAll(".site-card.menu-open").forEach((openCard) => {
+          if (openCard !== card) openCard.classList.remove("menu-open");
+        });
+        card.classList.toggle("menu-open");
+        return;
+      }
+      if (actionButton?.dataset.action === "edit-site") {
+        event.stopPropagation();
+        card.classList.remove("menu-open");
+        openSiteEditor(site.id);
+        return;
+      }
+      if (actionButton?.dataset.action === "delete-site") {
+        event.stopPropagation();
+        card.classList.remove("menu-open");
+        deleteSite(site.id);
+        return;
+      }
+      if (event.target.closest("button, a, input, textarea, .card-menu")) {
+        return;
+      }
+      openSiteFromCard(site);
+    }
+
+    function handleCardKeydown(event) {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      if (event.target.closest("button, a, input, textarea")) return;
+      event.preventDefault();
+      const site = getSiteById(event.currentTarget.dataset.id);
+      if (site) {
+        openSiteFromCard(site);
+      }
+    }
+
+    function getSiteById(id) {
+      return sites.find((site) => site.id === id);
+    }
+
+    function openSiteFromCard(site) {
+      window.open(site.url, "_blank", "noopener,noreferrer");
+    }
+
+    function deleteSite(siteId) {
+      const site = getSiteById(siteId);
+      if (!site) return;
+      if (!window.confirm(`确定删除“${site.title}”吗？`)) return;
+      sites = sites.filter((item) => item.id !== siteId);
+      saveSites();
+      render();
+    }
+
+    function handlePointerDown(event) {
+      const fromDragHandle = event.target.closest(".drag-handle");
+      const fromInteractive = event.target.closest("button, a, input, textarea, .card-menu");
+      if (event.button !== 0 || (fromInteractive && !fromDragHandle)) return;
+      const card = event.currentTarget;
+      pointerDrag = {
+        card,
+        id: card.dataset.id,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        active: false
+      };
+      card.setPointerCapture?.(event.pointerId);
+      document.addEventListener("pointermove", handlePointerMove);
+      document.addEventListener("pointerup", handlePointerUp);
+      document.addEventListener("pointercancel", handlePointerUp);
+    }
+
+    function handlePointerMove(event) {
+      if (!pointerDrag) return;
+      const deltaX = event.clientX - pointerDrag.startX;
+      const deltaY = event.clientY - pointerDrag.startY;
+      const distance = Math.hypot(deltaX, deltaY);
+
+      if (!pointerDrag.active && distance > 8) {
+        beginPointerDrag(event);
+      }
+      if (!pointerDrag.active) return;
+
+      event.preventDefault();
+      updateDragPreview(event);
+      const targetCard = document
+        .elementFromPoint(event.clientX, event.clientY)
+        ?.closest(".site-card");
+      if (targetCard && targetCard.dataset.id !== draggedId) {
+        moveDragPlaceholder(targetCard, event.clientY);
+      } else if (cardsGrid.matches(":hover")) {
+        moveDragPlaceholderToGridEdge(event.clientY);
+      }
+    }
+
+    function handlePointerUp(event) {
+      if (!pointerDrag) return;
+      if (pointerDrag.active) {
+        event.preventDefault();
+        suppressCardClick = true;
+        commitPointerDrag();
+      }
+      cleanupPointerDrag();
+    }
+
+    function beginPointerDrag(event) {
+      draggedId = pointerDrag.id;
+      pointerDrag.active = true;
+      pointerDrag.card.classList.add("dragging");
+      createDragPreview(pointerDrag.card);
+      createDragPlaceholder(pointerDrag.card);
+      updateDragPreview(event);
+    }
+
+    function commitPointerDrag() {
+      if (!draggedId || !dragPlaceholder) return;
+      const draggedIndex = sites.findIndex((site) => site.id === draggedId);
+      if (draggedIndex < 0) return;
+      const [draggedSite] = sites.splice(draggedIndex, 1);
+      const placeholderTargetIndex = getPlaceholderTargetIndex();
+      sites.splice(placeholderTargetIndex < 0 ? sites.length : placeholderTargetIndex, 0, draggedSite);
+      saveSites();
+      render();
+    }
+
+    function cleanupPointerDrag() {
+      pointerDrag?.card?.releasePointerCapture?.(pointerDrag.pointerId);
+      pointerDrag = null;
+      draggedId = null;
+      removeDragArtifacts();
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerup", handlePointerUp);
+      document.removeEventListener("pointercancel", handlePointerUp);
+      document.querySelectorAll(".site-card").forEach((card) => {
+        card.classList.remove("dragging", "drag-over");
+      });
+    }
+
+    function createDragPreview(card) {
+      removeDragPreview();
+      dragPreview = card.cloneNode(true);
+      dragPreview.classList.add("drag-preview");
+      dragPreview.style.width = `${card.offsetWidth}px`;
+      dragPreview.style.height = `${card.offsetHeight}px`;
+      document.body.append(dragPreview);
+    }
+
+    function createDragPlaceholder(card) {
+      removeDragPlaceholder();
+      dragPlaceholder = document.createElement("div");
+      dragPlaceholder.className = "drag-placeholder";
+      dragPlaceholder.style.minHeight = `${card.offsetHeight}px`;
+      card.after(dragPlaceholder);
+    }
+
+    function updateDragPreview(event) {
+      if (!dragPreview) return;
+      dragPreview.style.left = `${event.clientX}px`;
+      dragPreview.style.top = `${event.clientY}px`;
+    }
+
+    function moveDragPlaceholder(targetCard, clientY) {
+      if (!dragPlaceholder || targetCard.dataset.id === draggedId) return;
+      const rect = targetCard.getBoundingClientRect();
+      const placeBefore = clientY < rect.top + rect.height / 2;
+      if (placeBefore) {
+        targetCard.before(dragPlaceholder);
+      } else {
+        targetCard.after(dragPlaceholder);
+      }
+    }
+
+    function moveDragPlaceholderToGridEdge(clientY) {
+      if (!dragPlaceholder) return;
+      const cards = Array.from(cardsGrid.querySelectorAll(".site-card"))
+        .filter((card) => card.dataset.id !== draggedId);
+      if (!cards.length) {
+        cardsGrid.append(dragPlaceholder);
+        return;
+      }
+
+      const firstRect = cards[0].getBoundingClientRect();
+      const lastRect = cards[cards.length - 1].getBoundingClientRect();
+      if (clientY < firstRect.top) {
+        cards[0].before(dragPlaceholder);
+      } else if (clientY > lastRect.bottom) {
+        cards[cards.length - 1].after(dragPlaceholder);
+      }
+    }
+
+    function removeDragPreview() {
+      if (dragPreview) {
+        dragPreview.remove();
+        dragPreview = null;
+      }
+    }
+
+    function removeDragPlaceholder() {
+      if (dragPlaceholder) {
+        dragPlaceholder.remove();
+        dragPlaceholder = null;
+      }
+    }
+
+    function removeDragArtifacts() {
+      removeDragPreview();
+      removeDragPlaceholder();
+    }
+
+    function getPlaceholderTargetIndex() {
+      if (!dragPlaceholder || !dragPlaceholder.parentElement) return -1;
+      const children = Array.from(cardsGrid.children);
+      const placeholderIndex = children.indexOf(dragPlaceholder);
+      if (placeholderIndex < 0) return -1;
+
+      const afterCard = children.slice(placeholderIndex + 1).find((child) => (
+        child.classList.contains("site-card") && child.dataset.id !== draggedId
+      ));
+      if (afterCard) {
+        return sites.findIndex((site) => site.id === afterCard.dataset.id);
+      }
+
+      const beforeCard = children.slice(0, placeholderIndex).reverse().find((child) => (
+        child.classList.contains("site-card") && child.dataset.id !== draggedId
+      ));
+      if (beforeCard) {
+        const beforeIndex = sites.findIndex((site) => site.id === beforeCard.dataset.id);
+        return beforeIndex < 0 ? sites.length : beforeIndex + 1;
+      }
+
+      return sites.length;
+    }
+
+    function openModal(category = "") {
+      editingSiteId = null;
+      siteForm.reset();
+      document.getElementById("modalTitle").textContent = "添加网站";
+      saveSiteButton.textContent = "保存";
+      document.getElementById("categoryInput").value = category === "All" ? "未分类" : category;
+      siteModal.classList.add("open");
+      document.getElementById("urlInput").focus();
+    }
+
+    function openSiteEditor(siteId) {
+      const site = getSiteById(siteId);
+      if (!site) return;
+      editingSiteId = siteId;
+      siteForm.reset();
+      document.getElementById("modalTitle").textContent = "编辑网站";
+      document.getElementById("urlInput").value = site.url;
+      document.getElementById("titleInput").value = site.title;
+      document.getElementById("categoryInput").value = site.category;
+      document.getElementById("descriptionInput").value = site.description || "";
+      saveSiteButton.textContent = "保存修改";
+      siteModal.classList.add("open");
+      document.getElementById("titleInput").focus();
+    }
+
+    function closeModal() {
+      siteModal.classList.remove("open");
+      editingSiteId = null;
+      addSiteButton.focus();
+    }
+
+    function openCategoryModal() {
+      renderCategoryManager();
+      categoryModal.classList.add("open");
+      document.getElementById("newCategoryInput").focus();
+    }
+
+    function closeCategoryModal() {
+      categoryModal.classList.remove("open");
+      manageCategoryButton.focus();
+    }
+
+    function renderCategoryManager() {
+      const categories = getCategories().filter((category) => category !== "All");
+      categoryList.innerHTML = "";
+
+      if (!categories.length) {
+        categoryList.innerHTML = `<p class="small-note">还没有分类，先添加一个。</p>`;
+        return;
+      }
+
+      categories.forEach((category) => {
+        const row = document.createElement("div");
+        row.className = "category-item";
+        row.dataset.category = category;
+        row.draggable = true;
+        row.innerHTML = `
+          <button class="drag-handle" type="button" aria-label="拖动 ${escapeAttribute(category)}">::</button>
+          <input type="text" value="${escapeAttribute(category)}" aria-label="编辑分类 ${escapeAttribute(category)}">
+          <select class="categoryIconInput" aria-label="选择分类图标">${renderIconOptions(getCategoryIcon(category))}</select>
+          <button class="delete-button" type="button" data-action="delete-category">删除</button>
+        `;
+        const nameInput = row.querySelector("input");
+        nameInput.addEventListener("blur", () => {
+          editCategory(category, nameInput.value);
+        });
+        nameInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            nameInput.blur();
+          }
+        });
+        row.addEventListener("dragstart", handleCategoryDragStart);
+        row.addEventListener("dragover", handleCategoryDragOver);
+        row.addEventListener("dragleave", handleCategoryDragLeave);
+        row.addEventListener("drop", handleCategoryDrop);
+        row.addEventListener("dragend", handleCategoryDragEnd);
+        categoryList.append(row);
+      });
+    }
+
+    function handleCategoryDragStart(event) {
+      const category = event.currentTarget.dataset.category;
+      if (!category) return;
+      draggedCategory = category;
+      event.currentTarget.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", category);
+    }
+
+    function handleCategoryDragOver(event) {
+      event.preventDefault();
+      event.currentTarget.classList.add("drag-over");
+      event.dataTransfer.dropEffect = "move";
+    }
+
+    function handleCategoryDragLeave(event) {
+      event.currentTarget.classList.remove("drag-over");
+    }
+
+    function handleCategoryDrop(event) {
+      event.preventDefault();
+      const targetCategory = event.currentTarget.dataset.category;
+      event.currentTarget.classList.remove("drag-over");
+      if (!draggedCategory || !targetCategory || draggedCategory === targetCategory) return;
+      reorderCategories(draggedCategory, targetCategory);
+    }
+
+    function handleCategoryDragEnd() {
+      draggedCategory = null;
+      document.querySelectorAll(".category-item").forEach((item) => {
+        item.classList.remove("dragging", "drag-over");
+      });
+    }
+
+    function reorderCategories(sourceCategory, targetCategory) {
+      customCategories = mergeCategories(customCategories);
+      const sourceIndex = customCategories.indexOf(sourceCategory);
+      const targetIndex = customCategories.indexOf(targetCategory);
+      if (sourceIndex < 0 || targetIndex < 0) return;
+
+      const [movedCategory] = customCategories.splice(sourceIndex, 1);
+      customCategories.splice(targetIndex, 0, movedCategory);
+      saveCategories();
+      render();
+      renderCategoryManager();
+    }
+
+    function addCategory(categoryName) {
+      const name = categoryName.trim();
+      if (!name || name === "All") return;
+      customCategories = mergeCategories(customCategories);
+      if (!getCategories().includes(name)) {
+        customCategories.push(name);
+        saveCategories();
+      }
+      if (!categoryIcons[name]) {
+        categoryIcons[name] = pickReserveIcon(name);
+        saveCategoryIcons();
+      }
+      activeCategory = name;
+      localStorage.setItem(CATEGORY_KEY, activeCategory);
+      render();
+      renderCategoryManager();
+    }
+
+    function editCategory(oldName, newName) {
+      const cleanName = newName.trim();
+      if (!oldName || !cleanName || oldName === cleanName || cleanName === "All") return;
+      customCategories = mergeCategories(customCategories);
+      const oldIndex = customCategories.indexOf(oldName);
+      const existingIndex = customCategories.indexOf(cleanName);
+
+      sites = sites.map((site) => (
+        site.category === oldName ? { ...site, category: cleanName } : site
+      ));
+
+      if (existingIndex >= 0) {
+        customCategories = customCategories.filter((category) => category !== oldName);
+      } else if (oldIndex >= 0) {
+        customCategories.splice(oldIndex, 1, cleanName);
+      } else {
+        customCategories.push(cleanName);
+      }
+
+      if (categoryIcons[oldName]) {
+        categoryIcons[cleanName] = categoryIcons[oldName];
+        delete categoryIcons[oldName];
+      } else if (!categoryIcons[cleanName]) {
+        categoryIcons[cleanName] = getCategoryIcon(oldName);
+      }
+
+      if (activeCategory === oldName) {
+        activeCategory = cleanName;
+        localStorage.setItem(CATEGORY_KEY, activeCategory);
+      }
+      saveSites();
+      saveCategories();
+      saveCategoryIcons();
+      render();
+      renderCategoryManager();
+    }
+
+    function deleteCategory(categoryName) {
+      if (!categoryName || !window.confirm(`确定删除“${categoryName}”分类吗？该分类下的网站会移到“未分类”。`)) return;
+      customCategories = mergeCategories(customCategories);
+      customCategories = customCategories.filter((category) => category !== categoryName);
+      delete categoryIcons[categoryName];
+      sites = sites.map((site) => (
+        site.category === categoryName ? { ...site, category: "未分类" } : site
+      ));
+      if (!customCategories.includes("未分类") && sites.some((site) => site.category === "未分类")) {
+        customCategories.push("未分类");
+      }
+      if (activeCategory === categoryName) {
+        activeCategory = "未分类";
+        localStorage.setItem(CATEGORY_KEY, activeCategory);
+      }
+      saveSites();
+      saveCategories();
+      saveCategoryIcons();
+      render();
+      renderCategoryManager();
+    }
+
+    function updateCategoryIcon(categoryName, iconId) {
+      if (!categoryName || !iconLibrary.some((icon) => icon.id === iconId)) return;
+      categoryIcons[categoryName] = iconId;
+      saveCategoryIcons();
+      render();
+      renderCategoryManager();
+    }
+
+    function addSite(formData) {
+      const url = normalizeUrl(formData.url);
+      const title = formData.title.trim();
+      const description = formData.description.trim();
+      const needsTitle = !title;
+      const needsDescription = !description;
+      const site = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        url,
+        title: title || getHostname(url),
+        category: formData.category.trim(),
+        description: description || "正在读取网页描述...",
+        metadataPending: {
+          title: needsTitle,
+          description: needsDescription
+        }
+      };
+      sites.unshift(site);
+      customCategories = mergeCategories(customCategories);
+      if (!customCategories.includes(site.category)) {
+        customCategories.push(site.category);
+      }
+      activeCategory = site.category;
+      localStorage.setItem(CATEGORY_KEY, activeCategory);
+      saveSites();
+      saveCategories();
+      render();
+      if (needsTitle || needsDescription) {
+        runMetadataRefresh(site.id);
+      }
+      return site;
+    }
+
+    function editSite(siteId, formData) {
+      const site = getSiteById(siteId);
+      if (!site) return null;
+      const title = formData.title.trim();
+      const description = formData.description.trim();
+      const url = normalizeUrl(formData.url);
+      const needsTitle = !title;
+      const needsDescription = !description;
+
+      site.url = url;
+      site.title = title || getHostname(url);
+      site.category = formData.category.trim();
+      site.description = description || "正在读取网页描述...";
+      site.metadataPending = needsTitle || needsDescription
+        ? { title: needsTitle, description: needsDescription }
+        : null;
+
+      if (!site.metadataPending) {
+        delete site.metadataPending;
+      }
+
+      customCategories = mergeCategories(customCategories);
+      if (!customCategories.includes(site.category)) {
+        customCategories.push(site.category);
+      }
+      if (!categoryIcons[site.category]) {
+        categoryIcons[site.category] = pickReserveIcon(site.category);
+      }
+      saveSites();
+      saveCategories();
+      saveCategoryIcons();
+      render();
+
+      if (needsTitle || needsDescription) {
+        runMetadataRefresh(site.id);
+      }
+      return site;
+    }
+
+    async function runMetadataRefresh(siteId) {
+      const site = getSiteById(siteId);
+      if (!site?.metadataPending) return;
+
+      const metadata = await fetchSiteMetadata(site.url);
+      const currentSite = getSiteById(siteId);
+      if (!currentSite) return;
+
+      if (currentSite.metadataPending.title && metadata.title) {
+        currentSite.title = metadata.title;
+      }
+      if (currentSite.metadataPending.description) {
+        currentSite.description = metadata.description || `来自 ${getHostname(currentSite.url)} 的导航链接。`;
+      }
+      delete currentSite.metadataPending;
+      saveSites();
+      render();
+    }
+
+    async function fetchSiteMetadata(url) {
+      const endpoints = [
+        url,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        // Jina AI Reader fallback for pages that block direct browser reads.
+        `https://r.jina.ai/${url}`
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const text = await fetchText(endpoint);
+          const metadata = parseMetadata(text);
+          if (metadata.title || metadata.description) {
+            return metadata;
+          }
+        } catch (error) {
+          console.warn("Metadata fetch failed:", endpoint, error);
+        }
+      }
+
+      return {};
+    }
+
+    async function fetchText(endpoint) {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 7000);
+      try {
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+          headers: { Accept: "text/html,text/plain,application/xhtml+xml" }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return await response.text();
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    }
+
+    function parseMetadata(text) {
+      const readerTitle = text.match(/^Title:\s*(.+)$/im)?.[1]?.trim();
+      const readerDescription = text.match(/^Description:\s*(.+)$/im)?.[1]?.trim();
+      if (readerTitle || readerDescription) {
+        return {
+          title: readerTitle,
+          description: readerDescription
+        };
+      }
+
+      const doc = new DOMParser().parseFromString(text, "text/html");
+      const title = doc.querySelector("title")?.textContent?.trim();
+      const description = doc
+        .querySelector('meta[name="description"], meta[property="og:description"], meta[name="twitter:description"]')
+        ?.getAttribute("content")
+        ?.trim();
+      return { title, description };
+    }
+
+    function renderDate() {
+      const formatter = new Intl.DateTimeFormat("zh-CN", {
+        weekday: "long",
+        month: "long",
+        day: "numeric"
+      });
+      dateLine.textContent = formatter.format(new Date());
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replaceAll("`", "&#096;");
+    }
+
+    function render() {
+      renderCategories();
+      renderCards();
+    }
+
+    addSiteButton.addEventListener("click", () => openModal(activeCategory));
+    manageCategoryButton.addEventListener("click", openCategoryModal);
+    cancelModalButton.addEventListener("click", closeModal);
+    closeCategoryModalButton.addEventListener("click", closeCategoryModal);
+
+    categoryModal.addEventListener("click", (event) => {
+      if (event.target === categoryModal) {
+        closeCategoryModal();
+        return;
+      }
+
+      const actionButton = event.target.closest("[data-action]");
+      if (!actionButton) return;
+      const row = actionButton.closest(".category-item");
+      if (!row) return;
+      const oldName = row.dataset.category;
+
+      if (actionButton.dataset.action === "delete-category") {
+        deleteCategory(oldName);
+      }
+    });
+
+    categoryModal.addEventListener("change", (event) => {
+      const iconSelect = event.target.closest(".categoryIconInput");
+      if (!iconSelect) return;
+      const row = iconSelect.closest(".category-item");
+      if (!row) return;
+      updateCategoryIcon(row.dataset.category, iconSelect.value);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && categoryModal.classList.contains("open")) {
+        closeCategoryModal();
+      }
+      if (event.key === "Escape") {
+        document.querySelectorAll(".site-card.menu-open").forEach((card) => {
+          card.classList.remove("menu-open");
+        });
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest(".site-card")) return;
+      document.querySelectorAll(".site-card.menu-open").forEach((card) => {
+        card.classList.remove("menu-open");
+      });
+    });
+
+    categoryForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const input = document.getElementById("newCategoryInput");
+      addCategory(input.value);
+      input.value = "";
+    });
+
+    siteForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = {
+        url: document.getElementById("urlInput").value,
+        title: document.getElementById("titleInput").value,
+        category: document.getElementById("categoryInput").value,
+        description: document.getElementById("descriptionInput").value
+      };
+      if (editingSiteId) {
+        editSite(editingSiteId, formData);
+      } else {
+        addSite(formData);
+      }
+      closeModal();
+    });
+
+    siteSearchInput.addEventListener("input", () => {
+      applySiteFilter();
+    });
+
+    render();
+  </script>
+</body>
+</html>
